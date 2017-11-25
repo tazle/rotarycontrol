@@ -1,0 +1,3 @@
+[submodule "ext/RotaryEncoder"]
+	path = ext/RotaryEncoder
+	url = https://github.com/mathertel/RotaryEncoder

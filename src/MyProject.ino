@@ -51,11 +51,6 @@ void setup() {
   USBSerial1.begin();
 }
 
-static const int MIN_DELAY = 250;
-static const int MAX_DELAY = 1000;
-
-static int counter = MIN_DELAY;
-
 #define MICROS_ROLLOVER ((unsigned long)59652323)
 static unsigned long usDelta(unsigned long old_us, unsigned long new_us) {
     new_us -= old_us;
@@ -108,19 +103,25 @@ void debounceRotary() {
 static bool needRotaryRead = false;
 
 void incCounter(int increment) {
-  counter += increment;
+  //counter += increment;
 }
+
+static const int MIN_DELAY = 50;
+static const int MAX_DELAY = 500;
+static const int DEFAULT_DELAY = 250;
+
+//static int counter = MIN_COUNTER;
 
 // loop() runs over and over again, as quickly as it can execute.
 void loop() {
-  int delay_ms = counter;
-  if (counter < MIN_DELAY) {
+  int delay_ms = rotary.position + DEFAULT_DELAY;
+  if (delay_ms < MIN_DELAY) {
     delay_ms = MIN_DELAY;
-    counter = MAX_DELAY;
+    //counter = MAX_DELAY;
   }
-  if (counter > MAX_DELAY) {
+  if (delay_ms > MAX_DELAY) {
     delay_ms = MAX_DELAY;
-    counter = MIN_DELAY;
+    //counter = MIN_DELAY;
   }
 
   digitalWrite(LED, HIGH);
