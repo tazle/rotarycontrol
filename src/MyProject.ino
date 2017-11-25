@@ -1,14 +1,43 @@
-/*
- * Project MyProject
- * Description:
- * Author:
- * Date:
- */
+// Rotery stuff
+const int8_t KNOBDIR[] = {
+  0, -1,  1,  0,
+  1,  0,  0, -1,
+ -1,  0,  0,  1,
+  0,  1, -1,  0
+};
 
- int LED = D7;
- int SWITCH = A3;
- int ROTARY_LINE_1 = D1;
- int ROTARY_LINE_2 = D4;
+enum Direction {ROT_LEFT, ROT_RIGHT};
+
+struct Rotary {
+  int8_t state = 3;
+  Direction lastDir = ROT_LEFT;
+  int32_t position = 0;
+};
+
+bool rotaryStateChanged(Rotary &rotary, int sig1, int sig2) {
+  int8_t newState = sig1 | (sig2 << 1);
+  int8_t change = KNOBDIR[newState | (rotary.state<<2)];
+  return change != 0;
+}
+
+void rotaryUpdate(Rotary &rotary, int sig1, int sig2) {
+  int8_t newState = sig1 | (sig2 << 1);
+  int8_t change = KNOBDIR[newState | (rotary.state<<2)];
+  rotary.position += change;
+  rotary.state = newState;
+  if (change < 0) {
+    rotary.lastDir = ROT_LEFT;
+  } else if (change > 0) {
+    rotary.lastDir = ROT_RIGHT;
+  }
+}
+
+// The rest
+
+int LED = D7;
+int SWITCH = A3;
+int ROTARY_LINE_1 = D1;
+int ROTARY_LINE_2 = D4;
 
 // setup() runs once, when the device is first turned on.
 void setup() {
@@ -62,14 +91,21 @@ void debounceSwitch() {
 }
 
 static unsigned long rotaryDebounceUs = 0;
+static Rotary rotary;
 
 void debounceRotary() {
-  if (checkDebounce(&rotaryDebounceUs, 1000)) {
-    triggerRotaryRead();
+  int l1 = digitalRead(ROTARY_LINE_1);
+  int l2 = digitalRead(ROTARY_LINE_2);
+
+  if (rotaryStateChanged(rotary, l1, l2) && checkDebounce(&rotaryDebounceUs, 1000)) {
+    rotaryUpdate(rotary, l1, l2);
+    USBSerial1.printf("rot: %d, %d, %d\n", rotary.state, rotary.lastDir, rotary.position);
   } else {
     //USBSerial1.printf("debounce rotary\n");
   }
 }
+
+static bool needRotaryRead = false;
 
 void incCounter(int increment) {
   counter += increment;
