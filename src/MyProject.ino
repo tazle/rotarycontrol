@@ -1,4 +1,8 @@
+#include <LedBlinker.h>
+#include <Timing.h>
+
 // Rotery stuff
+
 const int8_t KNOBDIR[] = {
   0, -1,  1,  0,
   1,  0,  0, -1,
@@ -51,13 +55,6 @@ void setup() {
   USBSerial1.begin();
 }
 
-#define MICROS_ROLLOVER ((unsigned long)59652323)
-static unsigned long usDelta(unsigned long old_us, unsigned long new_us) {
-    new_us -= old_us;
-    if((long)new_us < 0)
-        new_us += MICROS_ROLLOVER;
-    return new_us;
-}
 
 bool checkDebounce(unsigned long *lastCallTime, unsigned long debounceUs) {
   unsigned long now = micros();
@@ -110,22 +107,22 @@ static const int MIN_DELAY = 50;
 static const int MAX_DELAY = 500;
 static const int DEFAULT_DELAY = 250;
 
-//static int counter = MIN_COUNTER;
+static LedBlinker led(LED, DEFAULT_DELAY);
 
+int iter = 0;
 // loop() runs over and over again, as quickly as it can execute.
 void loop() {
   int delay_ms = rotary.position + DEFAULT_DELAY;
   if (delay_ms < MIN_DELAY) {
     delay_ms = MIN_DELAY;
-    //counter = MAX_DELAY;
   }
   if (delay_ms > MAX_DELAY) {
     delay_ms = MAX_DELAY;
-    //counter = MIN_DELAY;
   }
 
-  digitalWrite(LED, HIGH);
-  delay(delay_ms);
-  digitalWrite(LED, LOW);
-  delay(delay_ms);
+  led.setDelay(delay_ms);
+  led.tick();
+
+  delay(10);
+  iter++;
 }
